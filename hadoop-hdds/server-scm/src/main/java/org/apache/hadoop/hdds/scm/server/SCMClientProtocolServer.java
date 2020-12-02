@@ -264,9 +264,9 @@ public class SCMClientProtocolServer implements
     }
 
     if (sortNodes) {
-     List<DatanodeDetails> sortedNodes = getScm().getBlockProtocolServer()
-         .sortDatanodes(nodesToUuid(pipeline.getNodes()), client);
-     pipeline.setNodesInOrder(sortedNodes);
+      List<DatanodeDetails> sortedNodes = getScm().getBlockProtocolServer()
+          .sortDatanodes(nodesToUuid(pipeline.getNodes()), client);
+      pipeline.setNodesInOrder(sortedNodes);
     }
     return new ContainerWithPipeline(container, pipeline);
   }

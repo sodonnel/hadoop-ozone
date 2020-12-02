@@ -82,6 +82,7 @@ import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -378,7 +379,7 @@ public class TestKeyManagerUnit {
     when(ci.getContainerID()).thenReturn(1L);
     cps.add(new ContainerWithPipeline(ci, pipelineTwo));
 
-    when(containerClient.getContainerWithPipelineBatch(containerIDs,
+    when(containerClient.getContainerWithPipelineBatch(eq(containerIDs),
         anyBoolean(), anyString()))
         .thenReturn(cps);
 
@@ -492,7 +493,7 @@ public class TestKeyManagerUnit {
       TestOMRequestUtils.addKeyToOM(metadataManager, keyInfo);
     }
 
-    when(containerClient.getContainerWithPipelineBatch(containerIDs,
+    when(containerClient.getContainerWithPipelineBatch(eq(containerIDs),
         anyBoolean(), anyString()))
         .thenReturn(containersWithPipeline);
 
