@@ -701,7 +701,6 @@ public class KeyManagerImpl implements KeyManager {
     // value won't be null as the check is done inside try/catch block.
     refreshPipeline(value, args.getSortDatanodes(), clientAddress);
 
-    // TODO - optionally sort
     if (args.getSortDatanodes()) {
       sortDatanodes(clientAddress, value);
     }
@@ -1835,7 +1834,6 @@ public class KeyManagerImpl implements KeyManager {
         // Please refer this jira for more details.
         refreshPipeline(fileKeyInfo, sortDatanodes, clientAddress);
 
-        // TODO - handle sort optionally.
         if (sortDatanodes) {
           sortDatanodes(clientAddress, fileKeyInfo);
         }
@@ -2221,7 +2219,6 @@ public class KeyManagerImpl implements KeyManager {
     }
     refreshPipeline(keyInfoList, args.getSortDatanodes(), clientAddress);
 
-    // TODO - handle sort optionally
     if (args.getSortDatanodes()) {
       sortDatanodes(clientAddress, keyInfoList.toArray(new OmKeyInfo[0]));
     }
@@ -2330,6 +2327,12 @@ public class KeyManagerImpl implements KeyManager {
         }
         for (OmKeyLocationInfo k : key.getLocationList()) {
           Pipeline pipeline = k.getPipeline();
+          if (pipeline.nodesAreOrdered()) {
+            // The pipeline has already had its nodes sorted, possibly on SCM
+            // when the pipeline was refreshed, so we do not need to sort the
+            // nodes again.
+            continue;
+          }
           List<DatanodeDetails> nodes = pipeline.getNodes();
           List<String> uuidList = toNodeUuid(nodes);
           Set<String> uuidSet = new HashSet<>(uuidList);

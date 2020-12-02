@@ -238,6 +238,10 @@ public final class Pipeline {
     nodesInOrder.set(nodes);
   }
 
+  public boolean nodesAreOrdered() {
+    return nodesInOrder.get() != null && !nodesInOrder.get().isEmpty();
+  }
+
   public List<DatanodeDetails> getNodesInOrder() {
     if (nodesInOrder.get() == null || nodesInOrder.get().isEmpty()) {
       LOG.debug("Nodes in order is empty, delegate to getNodes");
