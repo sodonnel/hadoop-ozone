@@ -112,8 +112,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
+
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
 import org.mockito.Mockito;
+
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -767,7 +771,8 @@ public class TestKeyManagerImpl {
     List<ContainerWithPipeline> containerWithPipelines = Arrays.asList(
         new ContainerWithPipeline(containerInfo, pipeline));
     when(mockScmContainerClient.getContainerWithPipelineBatch(
-        Arrays.asList(1L))).thenReturn(containerWithPipelines);
+        Arrays.asList(1L), anyBoolean(), anyString()))
+        .thenReturn(containerWithPipelines);
 
     OmKeyInfo key = keyManager.lookupKey(keyArgs, null);
     Assert.assertEquals(key.getKeyName(), keyName);
@@ -1143,8 +1148,8 @@ public class TestKeyManagerImpl {
         cps.add(containerWithPipelineMock);
       }
 
-      when(sclProtocolMock.getContainerWithPipelineBatch(containerIDs))
-          .thenReturn(cps);
+      when(sclProtocolMock.getContainerWithPipelineBatch(containerIDs,
+          anyBoolean(), anyString())).thenReturn(cps);
 
       ScmClient scmClientMock = mock(ScmClient.class);
       when(scmClientMock.getContainerClient()).thenReturn(sclProtocolMock);
@@ -1181,10 +1186,11 @@ public class TestKeyManagerImpl {
       KeyManagerImpl keyManagerImpl =
           new KeyManagerImpl(ozoneManager, scmClientMock, conf, "om1");
 
-      keyManagerImpl.refreshPipeline(omKeyInfo);
+      keyManagerImpl.refreshPipeline(omKeyInfo, false, null);
 
       verify(sclProtocolMock, times(1))
-          .getContainerWithPipelineBatch(containerIDs);
+          .getContainerWithPipelineBatch(containerIDs, anyBoolean(),
+              anyString());
     } finally {
       cluster.shutdown();
     }
@@ -1202,7 +1208,7 @@ public class TestKeyManagerImpl {
       StorageContainerLocationProtocol sclProtocolMock = mock(
           StorageContainerLocationProtocol.class);
       doThrow(new IOException(errorMessage)).when(sclProtocolMock)
-          .getContainerWithPipelineBatch(anyList());
+          .getContainerWithPipelineBatch(anyList(), anyBoolean(), anyString());
 
       ScmClient scmClientMock = mock(ScmClient.class);
       when(scmClientMock.getContainerClient()).thenReturn(sclProtocolMock);
@@ -1226,7 +1232,7 @@ public class TestKeyManagerImpl {
           new KeyManagerImpl(ozoneManager, scmClientMock, conf, "om1");
 
       try {
-        keyManagerImpl.refreshPipeline(omKeyInfo);
+        keyManagerImpl.refreshPipeline(omKeyInfo, false, null);
         Assert.fail();
       } catch (OMException omEx) {
         Assert.assertEquals(SCM_GET_PIPELINE_EXCEPTION, omEx.getResult());

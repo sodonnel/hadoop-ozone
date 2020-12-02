@@ -326,7 +326,8 @@ public class TestScmSafeMode {
         "Open container " + containers.get(0).getContainerID() + " "
             + "doesn't have enough replicas to service this operation in Safe"
             + " mode.", () -> clientProtocolServer
-            .getContainerWithPipeline(containers.get(0).getContainerID()));
+            .getContainerWithPipeline(containers.get(0).getContainerID(),
+                false, null));
   }
 
   @Test(timeout = 300_000)

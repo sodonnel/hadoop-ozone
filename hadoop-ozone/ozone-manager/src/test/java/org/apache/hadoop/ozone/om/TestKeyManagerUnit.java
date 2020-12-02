@@ -80,6 +80,8 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Comparator.comparing;
 import static java.util.stream.Collectors.toList;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -376,7 +378,8 @@ public class TestKeyManagerUnit {
     when(ci.getContainerID()).thenReturn(1L);
     cps.add(new ContainerWithPipeline(ci, pipelineTwo));
 
-    when(containerClient.getContainerWithPipelineBatch(containerIDs))
+    when(containerClient.getContainerWithPipelineBatch(containerIDs,
+        anyBoolean(), anyString()))
         .thenReturn(cps);
 
     final OmVolumeArgs volumeArgs = OmVolumeArgs.newBuilder()
@@ -489,7 +492,8 @@ public class TestKeyManagerUnit {
       TestOMRequestUtils.addKeyToOM(metadataManager, keyInfo);
     }
 
-    when(containerClient.getContainerWithPipelineBatch(containerIDs))
+    when(containerClient.getContainerWithPipelineBatch(containerIDs,
+        anyBoolean(), anyString()))
         .thenReturn(containersWithPipeline);
 
     OmKeyArgs.Builder builder = new OmKeyArgs.Builder()
@@ -502,7 +506,8 @@ public class TestKeyManagerUnit {
             null, Long.MAX_VALUE, client);
 
     Assert.assertEquals(10, fileStatusList.size());
-    verify(containerClient).getContainerWithPipelineBatch(containerIDs);
+    verify(containerClient).getContainerWithPipelineBatch(containerIDs,
+        true, client);
     verify(blockClient).sortDatanodes(nodes, client);
   }
 

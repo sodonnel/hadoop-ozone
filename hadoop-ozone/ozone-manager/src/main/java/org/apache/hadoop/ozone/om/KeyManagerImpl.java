@@ -699,8 +699,9 @@ public class KeyManagerImpl implements KeyManager {
     // Refresh container pipeline info from SCM
     // based on OmKeyArgs.refreshPipeline flag
     // value won't be null as the check is done inside try/catch block.
-    refreshPipeline(value);
+    refreshPipeline(value, args.getSortDatanodes(), clientAddress);
 
+    // TODO - optionally sort
     if (args.getSortDatanodes()) {
       sortDatanodes(clientAddress, value);
     }
@@ -712,9 +713,10 @@ public class KeyManagerImpl implements KeyManager {
    * @param value OmKeyInfo
    */
   @VisibleForTesting
-  protected void refreshPipeline(OmKeyInfo value) throws IOException {
+  protected void refreshPipeline(OmKeyInfo value, boolean sortPipeline,
+      String clientAddress) throws IOException {
     Preconditions.checkNotNull(value, "OMKeyInfo cannot be null");
-    refreshPipeline(Arrays.asList(value));
+    refreshPipeline(Arrays.asList(value), sortPipeline, clientAddress);
   }
 
   /**
@@ -722,7 +724,8 @@ public class KeyManagerImpl implements KeyManager {
    * @param keyList a list of OmKeyInfo
    */
   @VisibleForTesting
-  protected void refreshPipeline(List<OmKeyInfo> keyList) throws IOException {
+  protected void refreshPipeline(List<OmKeyInfo> keyList, boolean sortPipeline,
+      String clientAddress) throws IOException {
     if (keyList == null || keyList.isEmpty()) {
       return;
     }
@@ -740,7 +743,7 @@ public class KeyManagerImpl implements KeyManager {
     }
 
     Map<Long, ContainerWithPipeline> containerWithPipelineMap =
-        refreshPipeline(containerIDs);
+        refreshPipeline(containerIDs, sortPipeline, clientAddress);
 
     for (OmKeyInfo keyInfo : keyList) {
       List<OmKeyLocationInfoGroup> locationInfoGroups =
@@ -763,7 +766,8 @@ public class KeyManagerImpl implements KeyManager {
    */
   @VisibleForTesting
   protected Map<Long, ContainerWithPipeline> refreshPipeline(
-      Set<Long> containerIDs) throws IOException {
+      Set<Long> containerIDs, boolean sortPipeline, String clientAddress)
+      throws IOException {
     // TODO: fix Some tests that may not initialize container client
     // The production should always have containerClient initialized.
     if (scmClient.getContainerClient() == null ||
@@ -775,7 +779,8 @@ public class KeyManagerImpl implements KeyManager {
 
     try {
       List<ContainerWithPipeline> cpList = scmClient.getContainerClient().
-          getContainerWithPipelineBatch(new ArrayList<>(containerIDs));
+          getContainerWithPipelineBatch(new ArrayList<>(containerIDs),
+              sortPipeline, clientAddress);
       for (ContainerWithPipeline cp : cpList) {
         containerWithPipelineMap.put(
             cp.getContainerInfo().getContainerID(), cp);
@@ -933,7 +938,7 @@ public class KeyManagerImpl implements KeyManager {
 
     List<OmKeyInfo> keyList = metadataManager.listKeys(volumeName, bucketName,
         startKey, keyPrefix, maxKeys);
-    refreshPipeline(keyList);
+    refreshPipeline(keyList, false, null);
     return keyList;
   }
 
@@ -1828,7 +1833,9 @@ public class KeyManagerImpl implements KeyManager {
         // refreshPipeline flag check has been removed as part of
         // https://issues.apache.org/jira/browse/HDDS-3658.
         // Please refer this jira for more details.
-        refreshPipeline(fileKeyInfo);
+        refreshPipeline(fileKeyInfo, sortDatanodes, clientAddress);
+
+        // TODO - handle sort optionally.
         if (sortDatanodes) {
           sortDatanodes(clientAddress, fileKeyInfo);
         }
@@ -2005,7 +2012,7 @@ public class KeyManagerImpl implements KeyManager {
    */
   public void refresh(OmKeyInfo key) throws IOException {
     Preconditions.checkNotNull(key, "Key info can not be null");
-    refreshPipeline(Arrays.asList(key));
+    refreshPipeline(Arrays.asList(key), false, null);
   }
 
   /**
@@ -2212,8 +2219,9 @@ public class KeyManagerImpl implements KeyManager {
     for (OzoneFileStatus fileStatus : fileStatusList) {
       keyInfoList.add(fileStatus.getKeyInfo());
     }
-    refreshPipeline(keyInfoList);
+    refreshPipeline(keyInfoList, args.getSortDatanodes(), clientAddress);
 
+    // TODO - handle sort optionally
     if (args.getSortDatanodes()) {
       sortDatanodes(clientAddress, keyInfoList.toArray(new OmKeyInfo[0]));
     }
