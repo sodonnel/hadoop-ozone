@@ -172,7 +172,6 @@ message GetContainerWithPipelineRequestProto {
 
 message GetContainerWithPipelineResponseProto {
   required ContainerWithPipeline containerWithPipeline = 1;
-  optional bool pipelineIsSorted = 2;
 }
 
 message GetContainerWithPipelineBatchRequestProto {
@@ -197,7 +196,6 @@ message GetSafeModeRuleStatusesResponseProto {
 
 message GetContainerWithPipelineBatchResponseProto {
   repeated ContainerWithPipeline containerWithPipelines = 1;
-  optional bool pipelineIsSorted = 2;
 }
 
 message SCMListContainerRequestProto {

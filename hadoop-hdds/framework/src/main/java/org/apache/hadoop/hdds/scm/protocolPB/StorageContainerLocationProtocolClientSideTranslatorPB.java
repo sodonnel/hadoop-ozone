@@ -187,12 +187,17 @@ public final class StorageContainerLocationProtocolClientSideTranslatorPB
       throws IOException {
     Preconditions.checkState(containerID >= 0,
         "Container ID cannot be negative");
-    GetContainerWithPipelineRequestProto request =
-        GetContainerWithPipelineRequestProto.newBuilder()
-            .setTraceID(TracingUtil.exportCurrentSpan())
-            .setContainerID(containerID)
-            .setSortPipeline(sortPipeline)
-            .setClientAddress(clientAddress).build();
+
+    GetContainerWithPipelineRequestProto.Builder bldr =
+        GetContainerWithPipelineRequestProto.newBuilder();
+    bldr.setTraceID(TracingUtil.exportCurrentSpan())
+        .setContainerID(containerID)
+        .setSortPipeline(sortPipeline);
+
+    if (clientAddress != null) {
+      bldr.setClientAddress(clientAddress);
+    }
+    GetContainerWithPipelineRequestProto request = bldr.build();
 
     ScmContainerLocationResponse response =
         submitRequest(Type.GetContainerWithPipeline,
