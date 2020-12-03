@@ -304,7 +304,7 @@ public final class StorageContainerLocationProtocolServerSideTranslatorPB
       throws IOException {
     boolean sortPipelines = false;
     String clientAddress = null;
-    if (request.hasSortPipeline()) {
+    if (request.hasSortPipeline() && request.hasClientAddress()) {
       sortPipelines = request.getSortPipeline();
       clientAddress = request.getClientAddress();
     }
@@ -313,7 +313,6 @@ public final class StorageContainerLocationProtocolServerSideTranslatorPB
             request.getContainerID(), sortPipelines, clientAddress);
     return GetContainerWithPipelineResponseProto.newBuilder()
         .setContainerWithPipeline(container.getProtobuf())
-        .setPipelineIsSorted(sortPipelines)
         .build();
   }
 
@@ -322,7 +321,7 @@ public final class StorageContainerLocationProtocolServerSideTranslatorPB
       GetContainerWithPipelineBatchRequestProto request) throws IOException {
     boolean sortPipelines = false;
     String clientAddress = null;
-    if (request.hasSortPipeline()) {
+    if (request.hasSortPipeline() && request.hasClientAddress()) {
       sortPipelines = request.getSortPipeline();
       clientAddress = request.getClientAddress();
     }
@@ -334,7 +333,6 @@ public final class StorageContainerLocationProtocolServerSideTranslatorPB
     for (ContainerWithPipeline container : containers) {
       builder.addContainerWithPipelines(container.getProtobuf());
     }
-    builder.setPipelineIsSorted(sortPipelines);
     return builder.build();
   }
 
