@@ -215,13 +215,16 @@ public final class StorageContainerLocationProtocolClientSideTranslatorPB
           "Container ID cannot be negative");
     }
 
-    GetContainerWithPipelineBatchRequestProto request =
-        GetContainerWithPipelineBatchRequestProto.newBuilder()
-            .setTraceID(TracingUtil.exportCurrentSpan())
-            .addAllContainerIDs(containerIDs)
-            .setClientAddress(clientAddress)
-            .setSortPipeline(sortPipelines)
-            .build();
+    GetContainerWithPipelineBatchRequestProto.Builder bldr =
+        GetContainerWithPipelineBatchRequestProto.newBuilder();
+
+    bldr.setTraceID(TracingUtil.exportCurrentSpan())
+        .addAllContainerIDs(containerIDs)
+        .setSortPipeline(sortPipelines);
+    if (clientAddress != null) {
+      bldr.setClientAddress(clientAddress);
+    }
+    GetContainerWithPipelineBatchRequestProto request = bldr.build();
 
     ScmContainerLocationResponse response =
         submitRequest(Type.GetContainerWithPipelineBatch,
