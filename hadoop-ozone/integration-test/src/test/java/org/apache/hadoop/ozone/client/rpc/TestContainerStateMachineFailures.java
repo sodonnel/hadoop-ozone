@@ -346,7 +346,7 @@ public class TestContainerStateMachineFailures {
     // delete the container db file
     FileUtil.fullyDelete(new File(keyValueContainerData.getContainerPath()));
     Pipeline pipeline = cluster.getStorageContainerLocationClient()
-            .getContainerWithPipeline(containerID).getPipeline();
+            .getContainerWithPipeline(containerID, false, null).getPipeline();
     XceiverClientSpi xceiverClient =
             xceiverClientManager.acquireClient(pipeline);
     ContainerProtos.ContainerCommandRequestProto.Builder request =
@@ -428,7 +428,7 @@ public class TestContainerStateMachineFailures {
     Assert.assertNotNull(snapshot);
     long containerID = omKeyLocationInfo.getContainerID();
     Pipeline pipeline = cluster.getStorageContainerLocationClient()
-            .getContainerWithPipeline(containerID).getPipeline();
+            .getContainerWithPipeline(containerID, false, null).getPipeline();
     XceiverClientSpi xceiverClient =
             xceiverClientManager.acquireClient(pipeline);
     ContainerProtos.ContainerCommandRequestProto.Builder request =
@@ -505,7 +505,7 @@ public class TestContainerStateMachineFailures {
     Assert.assertNotNull(snapshot);
     long containerID = omKeyLocationInfo.getContainerID();
     Pipeline pipeline = cluster.getStorageContainerLocationClient()
-            .getContainerWithPipeline(containerID).getPipeline();
+            .getContainerWithPipeline(containerID, false, null).getPipeline();
     XceiverClientSpi xceiverClient =
             xceiverClientManager.acquireClient(pipeline);
     CountDownLatch latch = new CountDownLatch(100);

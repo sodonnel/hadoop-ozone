@@ -175,7 +175,8 @@ message GetContainerResponseProto {
 message GetContainerWithPipelineRequestProto {
   required int64 containerID = 1;
   optional string traceID = 2;
-
+  optional bool sortPipeline = 3;
+  optional string clientAddress = 4;
 }
 
 message GetContainerWithPipelineResponseProto {
@@ -185,6 +186,8 @@ message GetContainerWithPipelineResponseProto {
 message GetContainerWithPipelineBatchRequestProto {
   repeated int64 containerIDs = 1;
   optional string traceID = 2;
+  optional bool sortPipeline = 3;
+  optional string clientAddress = 4;
 }
 
 message GetSafeModeRuleStatusesRequestProto {

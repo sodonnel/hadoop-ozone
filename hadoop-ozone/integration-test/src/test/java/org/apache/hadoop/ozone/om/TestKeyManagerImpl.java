@@ -112,8 +112,13 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.Timeout;
+
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyList;
 import org.mockito.Mockito;
+
+import static org.mockito.Matchers.anyString;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -767,7 +772,8 @@ public class TestKeyManagerImpl {
     List<ContainerWithPipeline> containerWithPipelines = Arrays.asList(
         new ContainerWithPipeline(containerInfo, pipeline));
     when(mockScmContainerClient.getContainerWithPipelineBatch(
-        Arrays.asList(1L))).thenReturn(containerWithPipelines);
+        eq(Arrays.asList(1L)), anyBoolean(), anyString()))
+        .thenReturn(containerWithPipelines);
 
     OmKeyInfo key = keyManager.lookupKey(keyArgs, null);
     Assert.assertEquals(key.getKeyName(), keyName);
@@ -786,16 +792,19 @@ public class TestKeyManagerImpl {
     OmKeyInfo key1 = keyManager.lookupKey(keyArgs, leader.getIpAddress());
     Assert.assertEquals(leader, key1.getLatestVersionLocations()
         .getLocationList().get(0).getPipeline().getClosestNode());
+    pipeline.clearNodesInOrder();
 
     // lookup key, follower1 as client
     OmKeyInfo key2 = keyManager.lookupKey(keyArgs, follower1.getIpAddress());
     Assert.assertEquals(follower1, key2.getLatestVersionLocations()
         .getLocationList().get(0).getPipeline().getClosestNode());
+    pipeline.clearNodesInOrder();
 
     // lookup key, follower2 as client
     OmKeyInfo key3 = keyManager.lookupKey(keyArgs, follower2.getIpAddress());
     Assert.assertEquals(follower2, key3.getLatestVersionLocations()
         .getLocationList().get(0).getPipeline().getClosestNode());
+    pipeline.clearNodesInOrder();
 
     // lookup key, random node as client
     OmKeyInfo key4 = keyManager.lookupKey(keyArgs,
@@ -1143,8 +1152,8 @@ public class TestKeyManagerImpl {
         cps.add(containerWithPipelineMock);
       }
 
-      when(sclProtocolMock.getContainerWithPipelineBatch(containerIDs))
-          .thenReturn(cps);
+      when(sclProtocolMock.getContainerWithPipelineBatch(eq(containerIDs),
+          anyBoolean(), anyString())).thenReturn(cps);
 
       ScmClient scmClientMock = mock(ScmClient.class);
       when(scmClientMock.getContainerClient()).thenReturn(sclProtocolMock);
@@ -1184,7 +1193,8 @@ public class TestKeyManagerImpl {
       keyManagerImpl.refresh(omKeyInfo);
 
       verify(sclProtocolMock, times(1))
-          .getContainerWithPipelineBatch(containerIDs);
+          .getContainerWithPipelineBatch(eq(containerIDs), anyBoolean(),
+              anyString());
     } finally {
       cluster.shutdown();
     }
@@ -1202,7 +1212,7 @@ public class TestKeyManagerImpl {
       StorageContainerLocationProtocol sclProtocolMock = mock(
           StorageContainerLocationProtocol.class);
       doThrow(new IOException(errorMessage)).when(sclProtocolMock)
-          .getContainerWithPipelineBatch(anyList());
+          .getContainerWithPipelineBatch(anyList(), anyBoolean(), anyString());
 
       ScmClient scmClientMock = mock(ScmClient.class);
       when(scmClientMock.getContainerClient()).thenReturn(sclProtocolMock);
@@ -1226,7 +1236,7 @@ public class TestKeyManagerImpl {
           new KeyManagerImpl(ozoneManager, scmClientMock, conf, "om1");
 
       try {
-        keyManagerImpl.refresh(omKeyInfo);
+        keyManagerImpl.refreshPipeline(omKeyInfo, false, null);
         Assert.fail();
       } catch (OMException omEx) {
         Assert.assertEquals(SCM_GET_PIPELINE_EXCEPTION, omEx.getResult());

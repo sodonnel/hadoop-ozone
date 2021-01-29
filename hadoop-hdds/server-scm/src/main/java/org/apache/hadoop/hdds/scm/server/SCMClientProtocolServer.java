@@ -223,8 +223,16 @@ public class SCMClientProtocolServer implements
 
   }
 
+  private List<String> nodesToUuid(List<DatanodeDetails> nodes) {
+    List<String> uuids = new ArrayList<>();
+    for (DatanodeDetails dn : nodes) {
+      uuids.add(dn.getUuid().toString());
+    }
+    return uuids;
+  }
+
   private ContainerWithPipeline getContainerWithPipelineCommon(
-      long containerID) throws IOException {
+      long containerID, boolean sortNodes, String client) throws IOException {
     final ContainerID cid = ContainerID.valueof(containerID);
     final ContainerInfo container = scm.getContainerManager()
         .getContainer(cid);
@@ -258,16 +266,22 @@ public class SCMClientProtocolServer implements
               .collect(Collectors.toList()));
     }
 
+    if (sortNodes) {
+      List<DatanodeDetails> sortedNodes = getScm().getBlockProtocolServer()
+          .sortDatanodes(nodesToUuid(pipeline.getNodes()), client);
+      pipeline.setNodesInOrder(sortedNodes);
+    }
     return new ContainerWithPipeline(container, pipeline);
   }
 
   @Override
-  public ContainerWithPipeline getContainerWithPipeline(long containerID)
-      throws IOException {
+  public ContainerWithPipeline getContainerWithPipeline(long containerID,
+      boolean sortPipeline, String clientHost) throws IOException {
     getScm().checkAdminAccess(null);
 
     try {
-      ContainerWithPipeline cp = getContainerWithPipelineCommon(containerID);
+      ContainerWithPipeline cp = getContainerWithPipelineCommon(containerID,
+          sortPipeline, clientHost);
       AUDIT.logReadSuccess(buildAuditMessageForSuccess(
           SCMAction.GET_CONTAINER_WITH_PIPELINE,
           Collections.singletonMap("containerID",
@@ -284,7 +298,8 @@ public class SCMClientProtocolServer implements
 
   @Override
   public List<ContainerWithPipeline> getContainerWithPipelineBatch(
-      List<Long> containerIDs) throws IOException {
+      List<Long> containerIDs, boolean sortPipelines, String clientHost)
+      throws IOException {
     getScm().checkAdminAccess(null);
 
     List<ContainerWithPipeline> cpList = new ArrayList<>();
@@ -292,7 +307,8 @@ public class SCMClientProtocolServer implements
     StringBuilder strContainerIDs = new StringBuilder();
     for (Long containerID : containerIDs) {
       try {
-        ContainerWithPipeline cp = getContainerWithPipelineCommon(containerID);
+        ContainerWithPipeline cp = getContainerWithPipelineCommon(containerID,
+            sortPipelines, clientHost);
         cpList.add(cp);
         strContainerIDs.append(ContainerID.valueof(containerID).toString());
         strContainerIDs.append(",");

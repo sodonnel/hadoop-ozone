@@ -458,7 +458,10 @@ public class ContainerOperationClient implements ScmClient {
   @Override
   public ContainerWithPipeline getContainerWithPipeline(long containerId)
       throws IOException {
-    return storageContainerLocationClient.getContainerWithPipeline(containerId);
+    // TODO - do we need to expose sortPipeline and ClientAddress on this API
+    //        too?
+    return storageContainerLocationClient.getContainerWithPipeline(containerId,
+        false, null);
   }
 
   /**

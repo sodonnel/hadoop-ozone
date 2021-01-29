@@ -171,7 +171,7 @@ public class TestStorageContainerManagerHelper {
       throws IOException {
     ContainerWithPipeline containerWithPipeline = cluster
         .getStorageContainerManager().getClientProtocolServer()
-        .getContainerWithPipeline(containerID);
+        .getContainerWithPipeline(containerID, false, null);
 
     DatanodeDetails dn =
         containerWithPipeline.getPipeline().getFirstNode();

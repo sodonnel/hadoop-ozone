@@ -330,8 +330,15 @@ public final class StorageContainerLocationProtocolServerSideTranslatorPB
   public GetContainerWithPipelineResponseProto getContainerWithPipeline(
       GetContainerWithPipelineRequestProto request)
       throws IOException {
+    boolean sortPipelines = false;
+    String clientAddress = null;
+    if (request.hasSortPipeline() && request.hasClientAddress()) {
+      sortPipelines = request.getSortPipeline();
+      clientAddress = request.getClientAddress();
+    }
     ContainerWithPipeline container = impl
-        .getContainerWithPipeline(request.getContainerID());
+        .getContainerWithPipeline(
+            request.getContainerID(), sortPipelines, clientAddress);
     return GetContainerWithPipelineResponseProto.newBuilder()
         .setContainerWithPipeline(container.getProtobuf())
         .build();
@@ -340,8 +347,15 @@ public final class StorageContainerLocationProtocolServerSideTranslatorPB
   public GetContainerWithPipelineBatchResponseProto
       getContainerWithPipelineBatch(
       GetContainerWithPipelineBatchRequestProto request) throws IOException {
+    boolean sortPipelines = false;
+    String clientAddress = null;
+    if (request.hasSortPipeline() && request.hasClientAddress()) {
+      sortPipelines = request.getSortPipeline();
+      clientAddress = request.getClientAddress();
+    }
     List<ContainerWithPipeline> containers = impl
-        .getContainerWithPipelineBatch(request.getContainerIDsList());
+        .getContainerWithPipelineBatch(request.getContainerIDsList(),
+            sortPipelines, clientAddress);
     GetContainerWithPipelineBatchResponseProto.Builder builder =
         GetContainerWithPipelineBatchResponseProto.newBuilder();
     for (ContainerWithPipeline container : containers) {

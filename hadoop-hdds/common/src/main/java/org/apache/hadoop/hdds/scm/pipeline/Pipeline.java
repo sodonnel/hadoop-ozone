@@ -30,6 +30,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -234,8 +235,17 @@ public final class Pipeline {
     return false;
   }
 
+  @VisibleForTesting
+  public void clearNodesInOrder() {
+    nodesInOrder.get().clear();
+  }
+
   public void setNodesInOrder(List<DatanodeDetails> nodes) {
     nodesInOrder.set(nodes);
+  }
+
+  public boolean nodesAreOrdered() {
+    return nodesInOrder.get() != null && !nodesInOrder.get().isEmpty();
   }
 
   public List<DatanodeDetails> getNodesInOrder() {

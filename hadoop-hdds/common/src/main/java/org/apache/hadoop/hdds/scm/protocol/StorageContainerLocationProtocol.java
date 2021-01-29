@@ -75,8 +75,8 @@ public interface StorageContainerLocationProtocol extends Closeable {
    * @return ContainerWithPipeline - the container info with the pipeline.
    * @throws IOException
    */
-  ContainerWithPipeline getContainerWithPipeline(long containerID)
-      throws IOException;
+  ContainerWithPipeline getContainerWithPipeline(long containerID,
+      boolean sortPipeline, String clientHost) throws IOException;
 
   /**
    * Ask SCM the location of a batch of containers. SCM responds with a group of
@@ -88,7 +88,8 @@ public interface StorageContainerLocationProtocol extends Closeable {
    * @throws IOException
    */
   List<ContainerWithPipeline> getContainerWithPipelineBatch(
-      List<Long> containerIDs) throws IOException;
+      List<Long> containerIDs, boolean sortPipelines, String clientHost)
+      throws IOException;
 
   /**
    * Ask SCM a list of containers with a range of container names

@@ -185,14 +185,22 @@ public final class StorageContainerLocationProtocolClientSideTranslatorPB
   /**
    * {@inheritDoc}
    */
-  public ContainerWithPipeline getContainerWithPipeline(long containerID)
+  public ContainerWithPipeline getContainerWithPipeline(long containerID,
+      boolean sortPipeline, String clientAddress)
       throws IOException {
     Preconditions.checkState(containerID >= 0,
         "Container ID cannot be negative");
-    GetContainerWithPipelineRequestProto request =
-        GetContainerWithPipelineRequestProto.newBuilder()
-            .setTraceID(TracingUtil.exportCurrentSpan())
-            .setContainerID(containerID).build();
+
+    GetContainerWithPipelineRequestProto.Builder bldr =
+        GetContainerWithPipelineRequestProto.newBuilder();
+    bldr.setTraceID(TracingUtil.exportCurrentSpan())
+        .setContainerID(containerID)
+        .setSortPipeline(sortPipeline);
+
+    if (clientAddress != null) {
+      bldr.setClientAddress(clientAddress);
+    }
+    GetContainerWithPipelineRequestProto request = bldr.build();
 
     ScmContainerLocationResponse response =
         submitRequest(Type.GetContainerWithPipeline,
@@ -208,17 +216,23 @@ public final class StorageContainerLocationProtocolClientSideTranslatorPB
    * {@inheritDoc}
    */
   public List<ContainerWithPipeline> getContainerWithPipelineBatch(
-      List<Long> containerIDs) throws IOException {
+      List<Long> containerIDs, boolean sortPipelines, String clientAddress)
+      throws IOException {
     for (Long containerID: containerIDs) {
       Preconditions.checkState(containerID >= 0,
           "Container ID cannot be negative");
     }
 
-    GetContainerWithPipelineBatchRequestProto request =
-        GetContainerWithPipelineBatchRequestProto.newBuilder()
-            .setTraceID(TracingUtil.exportCurrentSpan())
-            .addAllContainerIDs(containerIDs)
-            .build();
+    GetContainerWithPipelineBatchRequestProto.Builder bldr =
+        GetContainerWithPipelineBatchRequestProto.newBuilder();
+
+    bldr.setTraceID(TracingUtil.exportCurrentSpan())
+        .addAllContainerIDs(containerIDs)
+        .setSortPipeline(sortPipelines);
+    if (clientAddress != null) {
+      bldr.setClientAddress(clientAddress);
+    }
+    GetContainerWithPipelineBatchRequestProto request = bldr.build();
 
     ScmContainerLocationResponse response =
         submitRequest(Type.GetContainerWithPipelineBatch,

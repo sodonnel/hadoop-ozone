@@ -58,6 +58,6 @@ public class StorageContainerServiceProviderImpl
   @Override
   public ContainerWithPipeline getContainerWithPipeline(long containerId)
       throws IOException {
-    return scmClient.getContainerWithPipeline(containerId);
+    return scmClient.getContainerWithPipeline(containerId, false, null);
   }
 }
