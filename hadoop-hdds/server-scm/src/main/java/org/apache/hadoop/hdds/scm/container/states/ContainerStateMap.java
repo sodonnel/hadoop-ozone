@@ -33,7 +33,6 @@ import org.apache.hadoop.hdds.scm.container.ContainerReplica;
 import org.apache.hadoop.hdds.scm.container.ContainerInfo;
 import org.apache.hadoop.hdds.scm.exceptions.SCMException;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.LifeCycleState;
-import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationFactor;
 import org.apache.hadoop.hdds.protocol.proto.HddsProtos.ReplicationType;
 
 import org.slf4j.Logger;
@@ -63,7 +62,7 @@ import static org.apache.hadoop.hdds.scm.exceptions.SCMException.ResultCodes
  * replication pipeline they want to use. Each Container exists on top of a
  * pipeline, so we need to get ReplicationType that is specified by the user.
  * <p>
- * 4. ReplicationFactor - The replication factor represents how many copies
+ * 4. ReplicationConfig - The replication config represents how many copies
  * of data should be made, right now we support 2 different types, ONE
  * Replica and THREE Replica. User can specify how many copies should be made
  * for a ozone key.
@@ -85,7 +84,7 @@ public class ContainerStateMap {
 
   private final ContainerAttribute<LifeCycleState> lifeCycleStateMap;
   private final ContainerAttribute<String> ownerMap;
-  private final ContainerAttribute<ReplicationConfig> factorMap;
+  private final ContainerAttribute<ReplicationConfig> repConfigMap;
   private final ContainerAttribute<ReplicationType> typeMap;
   private final Map<ContainerID, ContainerInfo> containerMap;
   private final Map<ContainerID, Set<ContainerReplica>> replicaMap;
@@ -97,7 +96,7 @@ public class ContainerStateMap {
   public ContainerStateMap() {
     this.lifeCycleStateMap = new ContainerAttribute<>();
     this.ownerMap = new ContainerAttribute<>();
-    this.factorMap = new ContainerAttribute<>();
+    this.repConfigMap = new ContainerAttribute<>();
     this.typeMap = new ContainerAttribute<>();
     this.containerMap = new ConcurrentHashMap<>();
     this.replicaMap = new ConcurrentHashMap<>();
@@ -118,7 +117,7 @@ public class ContainerStateMap {
       containerMap.put(id, info);
       lifeCycleStateMap.insert(info.getState(), id);
       ownerMap.insert(info.getOwner(), id);
-      factorMap.insert(info.getReplicationConfig(), id);
+      repConfigMap.insert(info.getReplicationConfig(), id);
       typeMap.insert(info.getReplicationType(), id);
       replicaMap.put(id, ConcurrentHashMap.newKeySet());
 
@@ -146,7 +145,7 @@ public class ContainerStateMap {
       final ContainerInfo info = containerMap.remove(id);
       lifeCycleStateMap.remove(info.getState(), id);
       ownerMap.remove(info.getOwner(), id);
-      factorMap.remove(info.getReplicationConfig(), id);
+      repConfigMap.remove(info.getReplicationConfig(), id);
       typeMap.remove(info.getReplicationType(), id);
       // Flush the cache of this container type.
       flushCache(info);
@@ -323,10 +322,10 @@ public class ContainerStateMap {
    * @param repConfig - ReplicationConfig.
    * @return NavigableSet.
    */
-  NavigableSet<ContainerID> getContainerIDsByFactor(
+  NavigableSet<ContainerID> getContainerIDsByRepConfig(
       final ReplicationConfig repConfig) {
     Preconditions.checkNotNull(repConfig);
-    return factorMap.getCollection(repConfig);
+    return repConfigMap.getCollection(repConfig);
   }
 
   /**
@@ -379,7 +378,7 @@ public class ContainerStateMap {
     }
 
     final NavigableSet<ContainerID> factorSet =
-        factorMap.getCollection(repConfig);
+        repConfigMap.getCollection(repConfig);
     if (factorSet.size() == 0) {
       return EMPTY_SET;
     }
