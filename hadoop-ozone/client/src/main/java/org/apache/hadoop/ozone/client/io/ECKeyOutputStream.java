@@ -117,7 +117,6 @@ public class ECKeyOutputStream extends KeyOutputStream {
     this.config.setStreamBufferMaxSize(ecChunkSize);
     this.config.setStreamBufferFlushSize(ecChunkSize);
     this.config.setStreamBufferSize(ecChunkSize);
-    assert replicationConfig instanceof ECReplicationConfig;
     this.numDataBlks = replicationConfig.getData();
     this.numParityBlks = replicationConfig.getParity();
     ecChunkBufferCache =
