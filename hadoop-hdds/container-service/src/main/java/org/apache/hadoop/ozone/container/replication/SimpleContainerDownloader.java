@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
 import org.apache.hadoop.hdds.conf.ConfigurationSource;
@@ -74,38 +75,27 @@ public class SimpleContainerDownloader implements ContainerDownloader {
   public CompletableFuture<Path> getContainerDataFromReplicas(
       long containerId, List<DatanodeDetails> sourceDatanodes) {
 
-    CompletableFuture<Path> result = null;
-
     final List<DatanodeDetails> shuffledDatanodes =
         shuffleDatanodes(sourceDatanodes);
 
     for (DatanodeDetails datanode : shuffledDatanodes) {
       try {
-        if (result == null) {
-          result = downloadContainer(containerId, datanode);
-        } else {
-
-          result = result.exceptionally(t -> {
-            LOG.error("Error on replicating container: " + containerId, t);
-            try {
-              return downloadContainer(containerId, datanode).get();
-            } catch (ExecutionException | IOException e) {
-              LOG.error("Error on replicating container: " + containerId,
-                  e);
-            } catch (InterruptedException e) {
-              Thread.currentThread().interrupt();
-            }
-            return null;
-          });
-        }
+        CompletableFuture<Path> result =
+            downloadContainer(containerId, datanode);
+        result.get();
+        return result;
+      } catch (ExecutionException e) {
+        LOG.error("Error on replicating container: {}",
+            containerId, e.getCause());
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       } catch (Exception ex) {
         LOG.error(String.format(
             "Container %s download from datanode %s was unsuccessful. "
                 + "Trying the next datanode", containerId, datanode), ex);
       }
     }
-    return result;
-
+    return null;
   }
 
   //There is a chance for the download is successful but import is failed,
