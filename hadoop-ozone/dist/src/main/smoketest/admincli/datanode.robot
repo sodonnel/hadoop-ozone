@@ -41,7 +41,7 @@ Filter list by NodeOperationalState
     ${datanodes} =      Get Lines Containing String    ${output}    Datanode:
     @{lines} =          Split To Lines   ${datanodes}
     ${count} =          Get Length   ${lines}
-    Should Be Equal As Integers    ${count}    3
+    Should Be Equal As Integers    ${count}    5
 
 Filter list by NodeState
     ${uuid} =           Execute      ozone admin datanode list | grep '^Datanode:' | head -1 | awk '{ print \$2 }'
@@ -50,7 +50,7 @@ Filter list by NodeState
     ${datanodes} =      Get Lines Containing String    ${output}    Datanode:
     @{lines} =          Split To Lines   ${datanodes}
     ${count} =          Get Length   ${lines}
-    Should Be Equal As Integers    ${count}    3
+    Should Be Equal As Integers    ${count}    5
 
 Incomplete command
     ${output} =         Execute And Ignore Error     ozone admin datanode
