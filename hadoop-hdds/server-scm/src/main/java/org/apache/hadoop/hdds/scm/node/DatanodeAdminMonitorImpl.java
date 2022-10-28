@@ -84,7 +84,7 @@ public class DatanodeAdminMonitorImpl implements DatanodeAdminMonitor {
   private long unhealthyContainers = 0;
   private long underReplicatedContainers = 0;
 
-  private static final class ContainerStateInWorkflow {
+  public static final class ContainerStateInWorkflow {
     private long sufficientlyReplicated = 0;
     private long unhealthyContainers = 0;
     private long underReplicatedContainers = 0;
@@ -117,6 +117,23 @@ public class DatanodeAdminMonitorImpl implements DatanodeAdminMonitor {
     public String getHost() {
       return host;
     }
+
+    public long getSufficientlyReplicated() {
+      return sufficientlyReplicated;
+    }
+
+    public long getUnhealthyContainers() {
+      return unhealthyContainers;
+    }
+
+    public long getUnderReplicatedContainers() {
+      return underReplicatedContainers;
+    }
+
+    public long getPipelinesWaitingToClose() {
+      return pipelinesWaitingToClose;
+    }
+
   }
 
   private Map<String, ContainerStateInWorkflow> containerStateByHost;
@@ -224,7 +241,7 @@ public class DatanodeAdminMonitorImpl implements DatanodeAdminMonitor {
     return trackedNodes.size();
   }
 
-  synchronized void setMetricsToGauge() {
+  private void setMetricsToGauge() {
     synchronized(metrics) {
       metrics.setTrackedContainersUnhealthyTotal(unhealthyContainers);
       metrics.setTrackedRecommissionNodesTotal(trackedRecommission);
@@ -235,14 +252,7 @@ public class DatanodeAdminMonitorImpl implements DatanodeAdminMonitor {
       metrics.setTrackedContainersSufficientlyReplicatedTotal(
           sufficientlyReplicatedContainers);
       metrics.setTrackedPipelinesWaitingToCloseTotal(pipelinesWaitingToClose);
-      for (Map.Entry<String, ContainerStateInWorkflow> e :
-          containerStateByHost.entrySet()) {
-        metrics.metricRecordOfContainerStateByHost(e.getKey(),
-            e.getValue().sufficientlyReplicated,
-            e.getValue().underReplicatedContainers,
-            e.getValue().unhealthyContainers,
-            e.getValue().pipelinesWaitingToClose);
-      }
+      metrics.setHostLevelMetrics(containerStateByHost);
     }
   }
 

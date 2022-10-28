@@ -245,18 +245,20 @@ public final class NodeDecommissionMetrics implements MetricsSource {
             metric.getDescription()), 0L);
   }
 
-  public synchronized void metricRemoveRecordOfContainerStateByHost(String host) {
-    trackedWorkflowContainerMetricByHost.remove(
-        MetricByHost.SufficientlyReplicated.getMetricName(host));
-    trackedWorkflowContainerMetricByHost.remove(
-        MetricByHost.UnderReplicated.getMetricName(host));
-    trackedWorkflowContainerMetricByHost.remove(
-        MetricByHost.UnhealthyContainers.getMetricName(host));
-    trackedWorkflowContainerMetricByHost.remove(
-        MetricByHost.PipelinesWaitingToClose.getMetricName(host));
+  public synchronized void setHostLevelMetrics(Map<String,
+      DatanodeAdminMonitorImpl.ContainerStateInWorkflow> metrics) {
+    for (DatanodeAdminMonitorImpl.ContainerStateInWorkflow metric :
+        metrics.values())  {
+      trackedWorkflowContainerMetricByHost.clear();
+      metricRecordOfContainerStateByHost(metric.getHost(),
+          metric.getSufficientlyReplicated(),
+          metric.getUnderReplicatedContainers(),
+          metric.getUnhealthyContainers(),
+          metric.getPipelinesWaitingToClose());
+    }
   }
 
-  public void metricRecordOfContainerStateByHost(
+  private void metricRecordOfContainerStateByHost(
       String host,
       long sufficientlyReplicated,
       long underReplicated,
