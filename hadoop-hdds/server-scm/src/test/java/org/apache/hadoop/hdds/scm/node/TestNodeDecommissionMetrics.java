@@ -28,6 +28,7 @@ import org.apache.hadoop.hdds.scm.container.replication.ReplicationManager;
 import org.apache.hadoop.hdds.scm.events.SCMEvents;
 import org.apache.hadoop.hdds.scm.node.states.NodeNotFoundException;
 import org.apache.hadoop.hdds.server.events.EventQueue;
+import org.apache.hadoop.metrics2.lib.Interns;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,17 +140,21 @@ public class TestNodeDecommissionMetrics {
 
     // should have host specific metric collected
     // for datanode_host1
+    NodeDecommissionMetrics.MetricByHost metric =
+        NodeDecommissionMetrics.MetricByHost.PipelinesWaitingToClose;
     Assertions.assertEquals(2,
-        metrics.getTrackedPipelinesWaitingToCloseByHost(
-            "datanode_host1"));
+        metrics.getHostMetric(Interns.info(
+            metric.getMetricName("datanode_host1"),
+            metric.getDescription())));
     // Clear the pipelines and the metric collected for
     // datanode_host1 should clear
     nodeManager.setPipelines(dn1, 0);
     monitor.run();
     eventQueue.processAll(20000);
     Assertions.assertEquals(0,
-        metrics.getTrackedPipelinesWaitingToCloseByHost(
-            "datanode_host1"));
+        metrics.getHostMetric(Interns.info(
+            metric.getMetricName("datanode_host1"),
+            metric.getDescription())));
   }
 
   /**
@@ -189,8 +194,12 @@ public class TestNodeDecommissionMetrics {
 
     // should have host specific metric collected
     // for datanode_host1
+    NodeDecommissionMetrics.MetricByHost metric =
+        NodeDecommissionMetrics.MetricByHost.UnderReplicated;
     Assertions.assertEquals(1,
-        metrics.getTrackedUnderReplicatedByHost("datanode_host1"));
+        metrics.getHostMetric(Interns.info(
+            metric.getMetricName("datanode_host1"),
+            metric.getDescription())));
   }
 
   /**
@@ -228,8 +237,12 @@ public class TestNodeDecommissionMetrics {
 
     // should have host specific metric collected
     // for datanode_host1
+    NodeDecommissionMetrics.MetricByHost metric =
+        NodeDecommissionMetrics.MetricByHost.SufficientlyReplicated;
     Assertions.assertEquals(1,
-        metrics.getTrackedSufficientlyReplicatedByHost("datanode_host1"));
+        metrics.getHostMetric(Interns.info(
+            metric.getMetricName("datanode_host1"),
+            metric.getDescription())));
   }
 
   /**
@@ -263,9 +276,12 @@ public class TestNodeDecommissionMetrics {
 
     // should have host specific metric collected
     // for datanode_host1
+    NodeDecommissionMetrics.MetricByHost metric =
+        NodeDecommissionMetrics.MetricByHost.UnhealthyContainers;
     Assertions.assertEquals(1,
-        metrics.getTrackedUnhealthyContainersByHost(
-            "datanode_host1"));
+        metrics.getHostMetric(Interns.info(
+            metric.getMetricName("datanode_host1"),
+            metric.getDescription())));
   }
 
   /**
