@@ -64,83 +64,37 @@ public final class NodeDecommissionMetrics implements MetricsSource {
 
   private MetricsRegistry registry;
 
-  private enum MetricByHost {
-    PipelinesWaitingToClose("TrackedPipelinesWaitingToCloseDN",
-        "Number of pipelines waiting to close for "
-            + "host in decommissioning and "
-            + "maintenance mode"),
-    SufficientlyReplicated("TrackedSufficientlyReplicatedDN",
-        "Number of sufficiently replicated containers "
-            + "for host in decommissioning and "
-            + "maintenance mode"),
-    UnderReplicated("TrackedUnderReplicatedDN",
-        "Number of under-replicated containers "
-            + "for host in decommissioning and "
-            + "maintenance mode"),
-    UnhealthyContainers("TrackedUnhealthyContainersDN",
-        "Number of unhealthy containers "
-            + "for host in decommissioning and "
-            + "maintenance mode");
+  private static final MetricsInfo HOST_UNDER_REPLICATED = Interns.info(
+      "TrackedUnderReplicatedDN",
+      "Number of under-replicated containers "
+          + "for host in decommissioning and "
+          + "maintenance mode");
 
-    private final String metricName;
-    private final String desc;
+  private static final MetricsInfo HOST_PIPELINES_TO_CLOSE = Interns.info(
+      "TrackedPipelinesWaitingToCloseDN",
+      "Number of pipelines waiting to close for "
+          + "host in decommissioning and "
+          + "maintenance mode");
 
-    MetricByHost(String name, String desc) {
-      this.metricName = name;
-      this.desc = desc;
-    }
+  private static final MetricsInfo HOST_SUFFICIENTLY_REPLICATED = Interns.info(
+      "TrackedSufficientlyReplicatedDN",
+      "Number of sufficiently replicated containers "
+          + "for host in decommissioning and "
+          + "maintenance mode");
 
-    public String getMetricName(String host) {
-      return metricName + "-" + host;
-    }
+  private static final MetricsInfo HOST_UNHEALTHY_CONTAINERS = Interns.info(
+      "TrackedUnhealthyContainersDN",
+      "Number of unhealthy containers "
+          + "for host in decommissioning and "
+          + "maintenance mode");
 
-    public String getMetricName() {
-      return metricName;
-    }
 
-    public String getDescription() {
-      return desc;
-    }
-  };
-
-  private static final class TrackedWorkflowContainerState {
-    private String metricByHost;
-    private MetricsInfo metricsInfo;
-    private Long value;
-
-    private TrackedWorkflowContainerState(String metricByHost,
-                                          MetricsInfo info,
-                                          Long val) {
-      this.metricByHost = metricByHost;
-      metricsInfo = info;
-      value = val;
-    }
-
-    public void setValue(Long val) {
-      value = val;
-    }
-
-    public String getHost() {
-      return metricByHost.substring(metricByHost.indexOf("-") + 1,
-          metricByHost.length());
-    }
-
-    public MetricsInfo getMetricsInfo() {
-      return metricsInfo;
-    }
-
-    public Long getValue() {
-      return value;
-    }
-  }
-
-  private Map<String, TrackedWorkflowContainerState>
-      trackedWorkflowContainerMetricByHost;
+  private Map<String, ContainerStateInWorkflow> metricsByHost;
 
   /** Private constructor. */
   private NodeDecommissionMetrics() {
     this.registry = new MetricsRegistry(METRICS_SOURCE_NAME);
-    trackedWorkflowContainerMetricByHost = new HashMap<>();
+    metricsByHost = new HashMap<>();
   }
 
   /**
@@ -172,16 +126,22 @@ public final class NodeDecommissionMetrics implements MetricsSource {
     trackedContainersSufficientlyReplicatedTotal.snapshot(builder, all);
     builder.endRecord();
 
-    for (Map.Entry<String, TrackedWorkflowContainerState> e :
-        trackedWorkflowContainerMetricByHost.entrySet()) {
+    for (Map.Entry<String, ContainerStateInWorkflow> e :
+        metricsByHost.entrySet()) {
       MetricsRecordBuilder recordBuilder = collector
           .addRecord(METRICS_SOURCE_NAME);
       recordBuilder.add(
           new MetricsTag(Interns.info("datanode",
               "datanode host in decommission maintenance workflow"),
               e.getValue().getHost()));
-      recordBuilder.addGauge(e.getValue().getMetricsInfo(),
-          e.getValue().getValue());
+      recordBuilder.addGauge(HOST_PIPELINES_TO_CLOSE,
+          e.getValue().getPipelinesWaitingToClose());
+      recordBuilder.addGauge(HOST_UNDER_REPLICATED,
+          e.getValue().getUnderReplicatedContainers());
+      recordBuilder.addGauge(HOST_SUFFICIENTLY_REPLICATED,
+          e.getValue().getSufficientlyReplicated());
+      recordBuilder.addGauge(HOST_UNHEALTHY_CONTAINERS,
+          e.getValue().getUnhealthyContainers());
       recordBuilder.endRecord();
     }
   }
@@ -252,78 +212,33 @@ public final class NodeDecommissionMetrics implements MetricsSource {
     return trackedContainersSufficientlyReplicatedTotal.value();
   }
 
-  private TrackedWorkflowContainerState createContainerMetricsInfo(
-      String host,
-      MetricByHost metric) {
-    return new TrackedWorkflowContainerState(host,
-        Interns.info(metric.getMetricName(),
-            metric.getDescription()), 0L);
-  }
-
   public synchronized void metricRecordOfContainerStateByHost(
       Map<String, ContainerStateInWorkflow> containerStatesByHost) {
-    trackedWorkflowContainerMetricByHost.clear();
-    for (Map.Entry<String, ContainerStateInWorkflow> e :
-        containerStatesByHost.entrySet()) {
-      trackedWorkflowContainerMetricByHost
-          .computeIfAbsent(MetricByHost.SufficientlyReplicated
-                  .getMetricName(e.getKey()),
-              hostID -> createContainerMetricsInfo(hostID, MetricByHost
-                  .SufficientlyReplicated))
-          .setValue(e.getValue().getSufficientlyReplicated());
-
-      trackedWorkflowContainerMetricByHost
-          .computeIfAbsent(MetricByHost.UnderReplicated
-                  .getMetricName(e.getKey()),
-              hostID -> createContainerMetricsInfo(hostID, MetricByHost
-                  .UnderReplicated))
-          .setValue(e.getValue().getUnderReplicatedContainers());
-
-      trackedWorkflowContainerMetricByHost
-          .computeIfAbsent(MetricByHost.UnhealthyContainers
-                  .getMetricName(e.getKey()),
-              hostID -> createContainerMetricsInfo(hostID, MetricByHost
-                  .UnhealthyContainers))
-          .setValue(e.getValue().getUnhealthyContainers());
-
-      trackedWorkflowContainerMetricByHost
-          .computeIfAbsent(MetricByHost.PipelinesWaitingToClose.
-                  getMetricName(e.getKey()),
-              hostID -> createContainerMetricsInfo(hostID, MetricByHost
-                  .PipelinesWaitingToClose))
-          .setValue(e.getValue().getPipelinesWaitingToClose());
-    }
-  }
-
-  @VisibleForTesting
-  private synchronized Long getMetricValueByHost(String host,
-                                                 MetricByHost metric) {
-    if (!trackedWorkflowContainerMetricByHost
-        .containsKey(metric.getMetricName(host))) {
-      return null;
-    }
-    return trackedWorkflowContainerMetricByHost.
-        get(metric.getMetricName(host))
-        .getValue();
+    metricsByHost.clear();
+    metricsByHost.putAll(containerStatesByHost);
   }
 
   @VisibleForTesting
   public Long getTrackedPipelinesWaitingToCloseByHost(String host) {
-    return getMetricValueByHost(host, MetricByHost.PipelinesWaitingToClose);
+    ContainerStateInWorkflow values = metricsByHost.get(host);
+    return values == null ? null : values.getPipelinesWaitingToClose();
   }
 
   @VisibleForTesting
   public Long getTrackedSufficientlyReplicatedByHost(String host) {
-    return getMetricValueByHost(host, MetricByHost.SufficientlyReplicated);
+    ContainerStateInWorkflow values = metricsByHost.get(host);
+    return values == null ? null : values.getSufficientlyReplicated();
   }
 
   @VisibleForTesting
   public Long getTrackedUnderReplicatedByHost(String host) {
-    return getMetricValueByHost(host, MetricByHost.UnderReplicated);
+    ContainerStateInWorkflow values = metricsByHost.get(host);
+    return values == null ? null : values.getUnderReplicatedContainers();
   }
 
   @VisibleForTesting
   public Long getTrackedUnhealthyContainersByHost(String host) {
-    return getMetricValueByHost(host, MetricByHost.UnhealthyContainers);
+    ContainerStateInWorkflow values = metricsByHost.get(host);
+    return values == null ? null : values.getUnhealthyContainers();
   }
 }
