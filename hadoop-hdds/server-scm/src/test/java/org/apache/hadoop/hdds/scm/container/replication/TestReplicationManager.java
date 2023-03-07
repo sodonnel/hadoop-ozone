@@ -81,6 +81,7 @@ import static org.apache.hadoop.hdds.scm.container.replication.ReplicationTestUt
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 
 /**
  * Tests for the ReplicationManager.
@@ -845,6 +846,29 @@ public class TestReplicationManager {
     Assertions.assertEquals(src.getUuid(), sentCommand.getDatanodeId());
     Assertions.assertEquals(target,
         replicateContainerCommand.getTargetDatanode());
+  }
+
+  @Test
+  public void testCreateThrottledReplicateContainerCommand() throws AllSourcesOverloadedException {
+    Map<UUID, Integer> sourceNodes = new HashMap<>();
+    List<DatanodeDetails> sourceList = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+      sourceList.add(MockDatanodeDetails.randomDatanodeDetails());
+      sourceNodes.put(sourceList.get(i).getUuid(), i * 5);
+    }
+
+    Mockito.when(nodeManager.getCommandQueueCount(any(),
+            eq(SCMCommandProto.Type.replicateContainerCommand)))
+        .thenAnswer(invocation -> {
+          DatanodeDetails dn = invocation.getArgument(0);
+          return sourceNodes.get(dn);
+        });
+
+    DatanodeDetails destination = MockDatanodeDetails.randomDatanodeDetails();
+    Pair<DatanodeDetails, SCMCommand<?>> cmd = replicationManager
+        .createThrottledReplicationCommand(
+            1L, sourceList, destination, 0);
+    Assertions.assertEquals(sourceList.get(0), cmd.getLeft());
   }
 
   @SafeVarargs
